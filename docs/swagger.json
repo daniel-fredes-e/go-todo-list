@@ -94,6 +94,39 @@
             }
         },
         "/tasks": {
+            "get": {
+                "description": "Get tasks for the logged-in user",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Get Task",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.Task"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
             "post": {
                 "description": "Create a new task for the logged-in user",
                 "consumes": [

@@ -17,7 +17,7 @@ import (
 // @Success 200 {object} models.Task
 // @Failure 401 {object} map[string]string
 // @Failure 400 {object} map[string]string
-// @Router /tasks [post]
+// @Router /tasks [get]
 func GetTasks(c *gin.Context) {
     tokenString := c.GetHeader("Authorization")
     token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {

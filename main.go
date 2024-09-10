@@ -2,6 +2,7 @@ package main
 
 import (
 	"go-todo-list/config"
+	_ "go-todo-list/docs"
 	"go-todo-list/middleware"
 	"go-todo-list/routes"
 
@@ -36,5 +37,10 @@ func main() {
     authorized.GET("/tasks", routes.GetTasks)
     authorized.POST("/tasks", routes.CreateTask)
 
+    r.Use(func(c *gin.Context) {
+        c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+        c.Next()
+    })
+    
     r.Run(":4000")
 }

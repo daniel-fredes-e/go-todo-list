@@ -106,6 +106,28 @@ paths:
             type: object
       summary: Register
   /tasks:
+    get:
+      description: Get tasks for the logged-in user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Task'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get Task
     post:
       consumes:
       - application/json
