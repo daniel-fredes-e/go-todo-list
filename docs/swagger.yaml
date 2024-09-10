@@ -1,0 +1,145 @@
+definitions:
+  models.Task:
+    properties:
+      created_at:
+        type: string
+      deleted_at:
+        description: Campo de soft delete
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      status:
+        description: '"resolved" o "not resolved"'
+        type: string
+      updated_at:
+        type: string
+      user:
+        $ref: '#/definitions/models.User'
+      user_id:
+        type: integer
+    type: object
+  models.User:
+    properties:
+      created_at:
+        type: string
+      deleted_at:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      password:
+        type: string
+      tasks:
+        items:
+          $ref: '#/definitions/models.Task'
+        type: array
+      updated_at:
+        type: string
+      username:
+        type: string
+    type: object
+info:
+  contact: {}
+  description: To Do List
+  title: Go Todo List
+  version: "1"
+paths:
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: Login a user and return a JWT token
+      parameters:
+      - description: Login Input
+        in: body
+        name: login
+        required: true
+        schema:
+          additionalProperties:
+            type: string
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Login
+  /register:
+    post:
+      consumes:
+      - application/json
+      description: Register a new user
+      parameters:
+      - description: User Registration
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/models.User'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.User'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Register
+  /tasks:
+    post:
+      consumes:
+      - application/json
+      description: Create a new task for the logged-in user
+      parameters:
+      - description: Task
+        in: body
+        name: task
+        required: true
+        schema:
+          $ref: '#/definitions/models.Task'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Task'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Create Task
+securityDefinitions:
+  barerToken:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

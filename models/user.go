@@ -1,15 +1,21 @@
 package models
 
 import (
+	"time"
+
 	"golang.org/x/crypto/bcrypt"
-	"gorm.io/gorm"
 )
 
+// @swagger:model User
 type User struct {
-    gorm.Model
-    Username string `gorm:"unique"`
-    Name     string
-    Password string
+    ID        uint       `json:"id" gorm:"primaryKey"`
+    Username  string     `json:"username" gorm:"unique;not null"`
+    Name      string     `json:"name"`
+    Password  string     
+    CreatedAt time.Time  `json:"created_at"`
+    UpdatedAt time.Time  `json:"updated_at"`
+    DeletedAt *time.Time `json:"deleted_at,omitempty"`
+    Tasks     []Task     `json:"tasks"`
 }
 
 func (u *User) SetPassword(password string) error {

@@ -11,6 +11,15 @@ import (
 )
 
 func main() {
+
+    // @title Go Todo List
+    // @version 1
+    // @Description To Do List
+
+    // @securityDefinitions.apikey barerToken
+    // @in header
+    // @name Authorization
+
     r := gin.Default()
     config.ConnectDatabase()
 
@@ -25,6 +34,7 @@ func main() {
     authorized := r.Group("/")
     authorized.Use(middleware.JWTMiddleware())
     authorized.GET("/tasks", routes.GetTasks)
+    authorized.POST("/tasks", routes.CreateTask)
 
     r.Run(":4000")
 }
