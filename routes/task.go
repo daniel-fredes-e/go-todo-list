@@ -86,6 +86,7 @@ func CreateTask(c *gin.Context) {
     }
 
     task.UserID = user.ID
+    task.Status = models.Unresolved // Estado inicial no resuelto
     task.CreatedAt = time.Now()
     task.UpdatedAt = time.Now()
 
@@ -95,4 +96,89 @@ func CreateTask(c *gin.Context) {
     }
 
     c.JSON(http.StatusCreated, task)
+}
+
+// MarkTaskResolved marca una tarea como resuelta
+func MarkTaskResolved(c *gin.Context) {
+    taskID := c.Param("id")              // Obtiene el ID de la tarea desde la URL
+
+    tokenString := c.GetHeader("Authorization")
+    token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+        return jwtKey, nil
+    })
+    if err != nil || !token.Valid {
+        c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+        return
+    }
+
+    claims, ok := token.Claims.(jwt.MapClaims)
+    if !ok {
+        c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token claims"})
+        return
+    }
+
+    username := claims["username"].(string)
+    var user models.User
+    if err := config.DB.Where("username = ?", username).First(&user).Error; err != nil {
+        c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
+        return
+    }
+
+    var task models.Task
+    // Verifica si la tarea existe y pertenece al usuario
+    if err := config.DB.Where("id = ? AND user_id = ?", taskID, user.ID).First(&task).Error; err != nil {
+        c.JSON(http.StatusNotFound, gin.H{"error": "Task not found"})
+        return
+    }
+
+    task.Status = models.Resolved
+    task.UpdatedAt = time.Now()
+
+    if err := config.DB.Save(&task).Error; err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to mark task as resolved"})
+        return
+    }
+
+    c.JSON(http.StatusOK, task)
+}
+
+// DeleteTask elimina una tarea del usuario autenticado
+func DeleteTask(c *gin.Context) {
+    taskID := c.Param("id")              // Obtiene el ID de la tarea desde la URL
+
+    tokenString := c.GetHeader("Authorization")
+    token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+        return jwtKey, nil
+    })
+    if err != nil || !token.Valid {
+        c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+        return
+    }
+
+    claims, ok := token.Claims.(jwt.MapClaims)
+    if !ok {
+        c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token claims"})
+        return
+    }
+
+    username := claims["username"].(string)
+    var user models.User
+    if err := config.DB.Where("username = ?", username).First(&user).Error; err != nil {
+        c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
+        return
+    }
+
+    var task models.Task
+    // Verifica si la tarea existe y pertenece al usuario
+    if err := config.DB.Where("id = ? AND user_id = ?", taskID, user.ID).First(&task).Error; err != nil {
+        c.JSON(http.StatusNotFound, gin.H{"error": "Task not found"})
+        return
+    }
+
+    if err := config.DB.Delete(&task).Error; err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete task"})
+        return
+    }
+
+    c.JSON(http.StatusOK, gin.H{"message": "Task deleted successfully"})
 }

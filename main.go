@@ -36,6 +36,8 @@ func main() {
     authorized.Use(middleware.JWTMiddleware())
     authorized.GET("/tasks", routes.GetTasks)
     authorized.POST("/tasks", routes.CreateTask)
+    authorized.PATCH("/tasks/:id/resolve", routes.MarkTaskResolved)
+    authorized.DELETE("/tasks/:id", routes.DeleteTask)
 
     r.Use(func(c *gin.Context) {
         c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
