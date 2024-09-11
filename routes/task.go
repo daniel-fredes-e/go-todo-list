@@ -85,6 +85,7 @@ func CreateTask(c *gin.Context) {
         return
     }
 
+    task.UserID = user.ID
     task.CreatedAt = time.Now()
     task.UpdatedAt = time.Now()
 
