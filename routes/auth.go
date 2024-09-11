@@ -38,13 +38,13 @@ var jwtKey = []byte("your_secret_key")
 // @Accept  json
 // @Produce  json
 // @Param login body UserLogin true "Login Input"
-// @Success 200 {object} map[string]string
-// @Failure 401 {object} map[string]string
+// @Success 200 {object} utils.Response
+// @Failure 401 {object} utils.Response
 // @Router /login [post]
 func Login(c *gin.Context) {
     var input UserLogin
     if err := c.ShouldBindJSON(&input); err != nil {
-        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+        c.JSON(http.StatusBadRequest, utils.Response{Name: "error", Detail: err.Error()})
         return
     }
     username := input.Username
@@ -53,12 +53,12 @@ func Login(c *gin.Context) {
     user, err := utils.GetUserExist(username)
 
     if err != nil {
-        c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid username or password"})
+        c.JSON(http.StatusUnauthorized, utils.Response{Name: "error", Detail: "Invalid username or password"})
         return
     }
 
     if !user.CheckPassword(password) {
-        c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid username or password"})
+        c.JSON(http.StatusUnauthorized, utils.Response{Name: "error", Detail: "Invalid username or password"})
         return
     }
 
@@ -68,11 +68,11 @@ func Login(c *gin.Context) {
 
     tokenString, err := token.SignedString(jwtKey)
     if err != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not generate token"})
+        c.JSON(http.StatusInternalServerError, utils.Response{Name: "error", Detail: "Could not generate token"})
         return
     }
 
-    c.JSON(http.StatusOK, gin.H{"token": tokenString})
+    c.JSON(http.StatusOK, utils.Response{Name: "token", Detail: tokenString})
 }
 
 // Register maneja el registro de nuevos usuarios.
@@ -83,20 +83,18 @@ func Login(c *gin.Context) {
 // @Produce json
 // @Param user body UserRegister true "User Registration"
 // @Success 201 {object} UserResponse
-// @Failure 400 {object} map[string]string
+// @Failure 400 {object} utils.Response
 // @Router /register [post]
 func Register(c *gin.Context) {
     var user models.User
     var input UserRegister
     if err := c.ShouldBindJSON(&input); err != nil {
-        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+        c.JSON(http.StatusBadRequest, utils.Response{Name: "error", Detail: err.Error()})
         return
     }
 
-    // Verifica si el nombre de usuario ya existe
-    
     if _, err := utils.GetUserExist(input.Username); err == nil {
-        c.JSON(http.StatusBadRequest, gin.H{"error": "Username already taken"})
+        c.JSON(http.StatusBadRequest, utils.Response{Name: "error", Detail: "Username already taken"})
         return
     }
 
@@ -104,19 +102,16 @@ func Register(c *gin.Context) {
     user.Name = input.Name
     user.Password = input.Password
 
-    // Cifra la contraseña
     if err := user.SetPassword(user.Password); err != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to encrypt password"})
+        c.JSON(http.StatusInternalServerError, utils.Response{Name: "error", Detail: "Failed to encrypt password"})
         return
     }
 
-    // Guarda el nuevo usuario en la base de datos
     if err := utils.CreateUser(&user); err != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
+        c.JSON(http.StatusInternalServerError, utils.Response{Name: "error", Detail: "Failed to create user"})
         return
     }
 
-    // Crear una respuesta sin la contraseña
     userResponse := UserResponse{
         ID:        user.ID,
         Username:  user.Username,

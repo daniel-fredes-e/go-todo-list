@@ -106,7 +106,7 @@ func MarkTaskResolved(t *testing.T) {
     router := setupRouter()
     CreateTask(t)
     
-    //Get Tasks
+    //Mark Tasks Resolved
 
     req, _ := http.NewRequest("PATCH", "/tasks/1/resolve", nil)
     req.Header.Set("Content-Type", "application/json")
@@ -122,7 +122,7 @@ func DeleteTask(t *testing.T) {
     router := setupRouter()
     CreateTask(t)
     
-    //Get Tasks
+    //Delete Tasks
 
     req, _ := http.NewRequest("DELETE", "/tasks/1", nil)
     req.Header.Set("Content-Type", "application/json")

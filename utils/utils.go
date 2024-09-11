@@ -5,6 +5,11 @@ import (
 	"go-todo-list/models"
 )
 
+type Response struct {
+    Name string
+    Detail string
+}
+
 func CreateUser(user *models.User) error {
     return config.DB.Create(&user).Error
 }

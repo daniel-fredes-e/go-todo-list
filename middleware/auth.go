@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"go-todo-list/utils"
 	"net/http"
 
 	"github.com/dgrijalva/jwt-go"
@@ -14,7 +15,7 @@ func JWTMiddleware() gin.HandlerFunc {
     return func(c *gin.Context) {
         tokenString := c.GetHeader("Authorization")
         if tokenString == "" {
-            c.JSON(http.StatusUnauthorized, gin.H{"error": "Token is missing"})
+            c.JSON(http.StatusUnauthorized, utils.Response{Name: "error", Detail: "Token is missing"})
             c.Abort()
             return
         }
@@ -23,7 +24,7 @@ func JWTMiddleware() gin.HandlerFunc {
             return jwtKey, nil
         })
         if err != nil || !token.Valid {
-            c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+            c.JSON(http.StatusUnauthorized, utils.Response{Name: "error", Detail: "Invalid token"})
             c.Abort()
             return
         }
