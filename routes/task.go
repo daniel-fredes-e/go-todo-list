@@ -14,6 +14,7 @@ import (
 // @Summary Get Task
 // @Description Get tasks for the logged-in user
 // @Produce json
+// @Security ApiKeyAuth
 // @Success 200 {object} models.Task
 // @Failure 401 {object} map[string]string
 // @Failure 400 {object} map[string]string
@@ -51,6 +52,7 @@ func GetTasks(c *gin.Context) {
 // @Description Create a new task for the logged-in user
 // @Accept json
 // @Produce json
+// @Security ApiKeyAuth
 // @Param task body models.Task true "Task"
 // @Success 201 {object} models.Task
 // @Failure 401 {object} map[string]string
@@ -99,6 +101,17 @@ func CreateTask(c *gin.Context) {
 }
 
 // MarkTaskResolved marca una tarea como resuelta
+// @Summary Marca una tarea como resuelta
+// @Description Actualiza el estado de una tarea del usuario autenticado a "RESOLVED".
+// @Tags tasks
+// @Accept json
+// @Produce json
+// @Param id path int true "Task ID"
+// @Security ApiKeyAuth
+// @Success 200 {object} models.Task "Task marked as resolved"
+// @Failure 404 {object} map[string]string "error": "Task not found"
+// @Failure 500 {object} map[string]string "error": "Failed to mark task as resolved"
+// @Router /api/tasks/{id}/resolve [patch]
 func MarkTaskResolved(c *gin.Context) {
     taskID := c.Param("id")              // Obtiene el ID de la tarea desde la URL
 
@@ -143,6 +156,17 @@ func MarkTaskResolved(c *gin.Context) {
 }
 
 // DeleteTask elimina una tarea del usuario autenticado
+// @Summary Elimina una tarea del usuario autenticado
+// @Description Elimina una tarea específica del usuario autenticado dado el ID de la tarea.
+// @Tags tasks
+// @Accept json
+// @Produce json
+// @Param id path int true "Task ID"
+// @Security ApiKeyAuth
+// @Success 200 {object} map[string]string "message": "Task deleted successfully"
+// @Failure 404 {object} map[string]string "error": "Task not found"
+// @Failure 500 {object} map[string]string "error": "Failed to delete task"
+// @Router /api/tasks/{id} [delete]
 func DeleteTask(c *gin.Context) {
     taskID := c.Param("id")              // Obtiene el ID de la tarea desde la URL
 

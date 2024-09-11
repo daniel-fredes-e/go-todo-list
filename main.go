@@ -17,7 +17,7 @@ func main() {
     // @version 1
     // @Description To Do List
 
-    // @securityDefinitions.apikey barerToken
+    // @securityDefinitions.apikey
     // @in header
     // @name Authorization
 

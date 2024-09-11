@@ -13,8 +13,7 @@ definitions:
       name:
         type: string
       status:
-        description: '"resolved" o "not resolved"'
-        type: string
+        $ref: '#/definitions/models.TaskStatus'
       updated_at:
         type: string
       user:
@@ -22,6 +21,14 @@ definitions:
       user_id:
         type: integer
     type: object
+  models.TaskStatus:
+    enum:
+    - RESOLVED
+    - UNRESOLVED
+    type: string
+    x-enum-varnames:
+    - Resolved
+    - Unresolved
   models.User:
     properties:
       created_at:
@@ -49,6 +56,79 @@ info:
   title: Go Todo List
   version: "1"
 paths:
+  /api/tasks/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Elimina una tarea específica del usuario autenticado dado el ID
+        de la tarea.
+      parameters:
+      - description: Task ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'message": "Task deleted successfully'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: 'error": "Task not found'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: 'error": "Failed to delete task'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: Elimina una tarea del usuario autenticado
+      tags:
+      - tasks
+  /api/tasks/{id}/resolve:
+    patch:
+      consumes:
+      - application/json
+      description: Actualiza el estado de una tarea del usuario autenticado a "RESOLVED".
+      parameters:
+      - description: Task ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Task marked as resolved
+          schema:
+            $ref: '#/definitions/models.Task'
+        "404":
+          description: 'error": "Task not found'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: 'error": "Failed to mark task as resolved'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: Marca una tarea como resuelta
+      tags:
+      - tasks
   /login:
     post:
       consumes:
@@ -127,6 +207,8 @@ paths:
             additionalProperties:
               type: string
             type: object
+      security:
+      - ApiKeyAuth: []
       summary: Get Task
     post:
       consumes:
@@ -158,9 +240,11 @@ paths:
             additionalProperties:
               type: string
             type: object
+      security:
+      - ApiKeyAuth: []
       summary: Create Task
 securityDefinitions:
-  barerToken:
+  "":
     in: header
     name: Authorization
     type: apiKey

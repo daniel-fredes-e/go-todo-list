@@ -4,10 +4,19 @@ import (
 	"go-todo-list/config"
 	"go-todo-list/models"
 	"net/http"
+	"time"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 )
+
+type UserResponse struct {
+    ID        uint      `json:"id"`
+    Username  string    `json:"username"`
+    Name      string    `json:"name"`
+    CreatedAt time.Time `json:"created_at"`
+    UpdatedAt time.Time `json:"updated_at"`
+}
 
 var jwtKey = []byte("your_secret_key")
 
@@ -88,5 +97,14 @@ func Register(c *gin.Context) {
         return
     }
 
-    c.JSON(http.StatusCreated, input)
+    // Crear una respuesta sin la contraseña
+    userResponse := UserResponse{
+        ID:        input.ID,
+        Username:  input.Username,
+        Name:      input.Name,
+        CreatedAt: input.CreatedAt,
+        UpdatedAt: input.UpdatedAt,
+    }
+
+    c.JSON(http.StatusCreated, userResponse)
 }
