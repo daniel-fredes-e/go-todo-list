@@ -21,5 +21,5 @@ type Task struct {
     UpdatedAt   time.Time  `json:"updated_at"`
     DeletedAt   *time.Time `json:"deleted_at,omitempty"`  // Campo de soft delete
     UserID      uint       `json:"user_id"`
-    User        User       `json:"user"`
+    User        User       `json:"-"`
 }

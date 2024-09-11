@@ -10,14 +10,20 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+type TaskRegister struct {
+    Name string `json:"name"`
+    Description string `json:"description"`
+}
+
 // GetTasks Obtiene las tareas de un usuario autorizado.
-// @Summary Get Task
-// @Description Get tasks for the logged-in user
+// @Summary Get Tasks
+// @Description Obtiene las tareas de un usuario autorizado
+// @Tags tasks
+// @Accept json
 // @Produce json
 // @Security ApiKeyAuth
-// @Success 200 {object} models.Task
-// @Failure 401 {object} map[string]string
-// @Failure 400 {object} map[string]string
+// @Success 200 {array} models.Task "Lista de tareas del usuario"
+// @Failure 401 {object} map[string]string "error": "Unauthorized"
 // @Router /tasks [get]
 func GetTasks(c *gin.Context) {
     tokenString := c.GetHeader("Authorization")
@@ -49,11 +55,12 @@ func GetTasks(c *gin.Context) {
 
 // CreateTask maneja la creación de nuevas tareas.
 // @Summary Create Task
-// @Description Create a new task for the logged-in user
+// @Description creación de nuevas tareas para usuario autorizado
+// @Tags tasks
 // @Accept json
 // @Produce json
 // @Security ApiKeyAuth
-// @Param task body models.Task true "Task"
+// @Param task body TaskRegister true "Task"
 // @Success 201 {object} models.Task
 // @Failure 401 {object} map[string]string
 // @Failure 400 {object} map[string]string
@@ -82,7 +89,8 @@ func CreateTask(c *gin.Context) {
     }
 
     var task models.Task
-    if err := c.ShouldBindJSON(&task); err != nil {
+    var input TaskRegister
+    if err := c.ShouldBindJSON(&input); err != nil {
         c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
         return
     }
@@ -91,6 +99,8 @@ func CreateTask(c *gin.Context) {
     task.Status = models.Unresolved // Estado inicial no resuelto
     task.CreatedAt = time.Now()
     task.UpdatedAt = time.Now()
+    task.Name = input.Name
+    task.Description = input.Description
 
     if err := config.DB.Create(&task).Error; err != nil {
         c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create task"})
@@ -101,17 +111,17 @@ func CreateTask(c *gin.Context) {
 }
 
 // MarkTaskResolved marca una tarea como resuelta
-// @Summary Marca una tarea como resuelta
+// @Summary Mark Task Resolved
 // @Description Actualiza el estado de una tarea del usuario autenticado a "RESOLVED".
 // @Tags tasks
 // @Accept json
 // @Produce json
 // @Param id path int true "Task ID"
 // @Security ApiKeyAuth
-// @Success 200 {object} models.Task "Task marked as resolved"
-// @Failure 404 {object} map[string]string "error": "Task not found"
-// @Failure 500 {object} map[string]string "error": "Failed to mark task as resolved"
-// @Router /api/tasks/{id}/resolve [patch]
+// @Success 200 {object} models.Task "Tarea Resuelta"
+// @Failure 404 {object} map[string]string "error": "Tarea no encontrada"
+// @Failure 500 {object} map[string]string "error": "Falló al actualizar la tarea"
+// @Router /tasks/{id}/resolve [patch]
 func MarkTaskResolved(c *gin.Context) {
     taskID := c.Param("id")              // Obtiene el ID de la tarea desde la URL
 
@@ -156,17 +166,17 @@ func MarkTaskResolved(c *gin.Context) {
 }
 
 // DeleteTask elimina una tarea del usuario autenticado
-// @Summary Elimina una tarea del usuario autenticado
+// @Summary Delete Task
 // @Description Elimina una tarea específica del usuario autenticado dado el ID de la tarea.
 // @Tags tasks
 // @Accept json
 // @Produce json
 // @Param id path int true "Task ID"
 // @Security ApiKeyAuth
-// @Success 200 {object} map[string]string "message": "Task deleted successfully"
-// @Failure 404 {object} map[string]string "error": "Task not found"
-// @Failure 500 {object} map[string]string "error": "Failed to delete task"
-// @Router /api/tasks/{id} [delete]
+// @Success 200 {object} map[string]string "message": "Tarea Eliminada"
+// @Failure 404 {object} map[string]string "error": "Tarea no encontrada"
+// @Failure 500 {object} map[string]string "error": "Falló al eliminar la tarea"
+// @Router /tasks/{id} [delete]
 func DeleteTask(c *gin.Context) {
     taskID := c.Param("id")              // Obtiene el ID de la tarea desde la URL
 

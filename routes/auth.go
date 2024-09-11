@@ -18,26 +18,38 @@ type UserResponse struct {
     UpdatedAt time.Time `json:"updated_at"`
 }
 
+type UserRegister struct {
+    Username string `json:"username"`
+    Name     string `json:"name"`
+    Password string `json:"password"`
+}
+
+type UserLogin struct {
+    Username string `json:"username"`
+    Password string `json:"password"`
+}
+
 var jwtKey = []byte("your_secret_key")
 
 // Login
 // @Summary Login
-// @Description Login a user and return a JWT token
+// @Description Login de usuario, devuelve Token JWT
+// @Tags users
 // @Accept  json
 // @Produce  json
-// @Param login body map[string]string true "Login Input"
+// @Param login body UserLogin true "Login Input"
 // @Success 200 {object} map[string]string
 // @Failure 401 {object} map[string]string
 // @Router /login [post]
 func Login(c *gin.Context) {
     var user models.User
-    var input map[string]string
+    var input UserLogin
     if err := c.ShouldBindJSON(&input); err != nil {
         c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
         return
     }
-    username := input["username"]
-    password := input["password"]
+    username := input.Username
+    password := input.Password
 
     if err := config.DB.Where("username = ?", username).First(&user).Error; err != nil {
         c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid username or password"})
@@ -64,15 +76,17 @@ func Login(c *gin.Context) {
 
 // Register maneja el registro de nuevos usuarios.
 // @Summary Register
-// @Description Register a new user
+// @Description Registra nuevo usuario
+// @Tags users
 // @Accept json
 // @Produce json
-// @Param user body models.User true "User Registration"
-// @Success 201 {object} models.User
+// @Param user body UserRegister true "User Registration"
+// @Success 201 {object} UserResponse
 // @Failure 400 {object} map[string]string
 // @Router /register [post]
 func Register(c *gin.Context) {
-    var input models.User
+    var user models.User
+    var input UserRegister
     if err := c.ShouldBindJSON(&input); err != nil {
         c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
         return
@@ -85,25 +99,29 @@ func Register(c *gin.Context) {
         return
     }
 
+    user.Username = input.Username
+    user.Name = input.Name
+    user.Password = input.Password
+
     // Cifra la contraseña
-    if err := input.SetPassword(input.Password); err != nil {
+    if err := user.SetPassword(user.Password); err != nil {
         c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to encrypt password"})
         return
     }
 
     // Guarda el nuevo usuario en la base de datos
-    if err := config.DB.Create(&input).Error; err != nil {
+    if err := config.DB.Create(&user).Error; err != nil {
         c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
         return
     }
 
     // Crear una respuesta sin la contraseña
     userResponse := UserResponse{
-        ID:        input.ID,
-        Username:  input.Username,
-        Name:      input.Name,
-        CreatedAt: input.CreatedAt,
-        UpdatedAt: input.UpdatedAt,
+        ID:        user.ID,
+        Username:  user.Username,
+        Name:      user.Name,
+        CreatedAt: user.CreatedAt,
+        UpdatedAt: user.UpdatedAt,
     }
 
     c.JSON(http.StatusCreated, userResponse)

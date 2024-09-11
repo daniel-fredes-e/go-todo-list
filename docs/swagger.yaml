@@ -16,8 +16,6 @@ definitions:
         $ref: '#/definitions/models.TaskStatus'
       updated_at:
         type: string
-      user:
-        $ref: '#/definitions/models.User'
       user_id:
         type: integer
     type: object
@@ -29,22 +27,37 @@ definitions:
     x-enum-varnames:
     - Resolved
     - Unresolved
-  models.User:
+  routes.TaskRegister:
+    properties:
+      description:
+        type: string
+      name:
+        type: string
+    type: object
+  routes.UserLogin:
+    properties:
+      password:
+        type: string
+      username:
+        type: string
+    type: object
+  routes.UserRegister:
+    properties:
+      name:
+        type: string
+      password:
+        type: string
+      username:
+        type: string
+    type: object
+  routes.UserResponse:
     properties:
       created_at:
-        type: string
-      deleted_at:
         type: string
       id:
         type: integer
       name:
         type: string
-      password:
-        type: string
-      tasks:
-        items:
-          $ref: '#/definitions/models.Task'
-        type: array
       updated_at:
         type: string
       username:
@@ -56,93 +69,18 @@ info:
   title: Go Todo List
   version: "1"
 paths:
-  /api/tasks/{id}:
-    delete:
-      consumes:
-      - application/json
-      description: Elimina una tarea específica del usuario autenticado dado el ID
-        de la tarea.
-      parameters:
-      - description: Task ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 'message": "Task deleted successfully'
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "404":
-          description: 'error": "Task not found'
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "500":
-          description: 'error": "Failed to delete task'
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      security:
-      - ApiKeyAuth: []
-      summary: Elimina una tarea del usuario autenticado
-      tags:
-      - tasks
-  /api/tasks/{id}/resolve:
-    patch:
-      consumes:
-      - application/json
-      description: Actualiza el estado de una tarea del usuario autenticado a "RESOLVED".
-      parameters:
-      - description: Task ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Task marked as resolved
-          schema:
-            $ref: '#/definitions/models.Task'
-        "404":
-          description: 'error": "Task not found'
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "500":
-          description: 'error": "Failed to mark task as resolved'
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      security:
-      - ApiKeyAuth: []
-      summary: Marca una tarea como resuelta
-      tags:
-      - tasks
   /login:
     post:
       consumes:
       - application/json
-      description: Login a user and return a JWT token
+      description: Login de usuario, devuelve Token JWT
       parameters:
       - description: Login Input
         in: body
         name: login
         required: true
         schema:
-          additionalProperties:
-            type: string
-          type: object
+          $ref: '#/definitions/routes.UserLogin'
       produces:
       - application/json
       responses:
@@ -159,25 +97,27 @@ paths:
               type: string
             type: object
       summary: Login
+      tags:
+      - users
   /register:
     post:
       consumes:
       - application/json
-      description: Register a new user
+      description: Registra nuevo usuario
       parameters:
       - description: User Registration
         in: body
         name: user
         required: true
         schema:
-          $ref: '#/definitions/models.User'
+          $ref: '#/definitions/routes.UserRegister'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/models.User'
+            $ref: '#/definitions/routes.UserResponse'
         "400":
           description: Bad Request
           schema:
@@ -185,42 +125,44 @@ paths:
               type: string
             type: object
       summary: Register
+      tags:
+      - users
   /tasks:
     get:
-      description: Get tasks for the logged-in user
+      consumes:
+      - application/json
+      description: Obtiene las tareas de un usuario autorizado
       produces:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Lista de tareas del usuario
           schema:
-            $ref: '#/definitions/models.Task'
-        "400":
-          description: Bad Request
-          schema:
-            additionalProperties:
-              type: string
-            type: object
+            items:
+              $ref: '#/definitions/models.Task'
+            type: array
         "401":
-          description: Unauthorized
+          description: 'error": "Unauthorized'
           schema:
             additionalProperties:
               type: string
             type: object
       security:
       - ApiKeyAuth: []
-      summary: Get Task
+      summary: Get Tasks
+      tags:
+      - tasks
     post:
       consumes:
       - application/json
-      description: Create a new task for the logged-in user
+      description: creación de nuevas tareas para usuario autorizado
       parameters:
       - description: Task
         in: body
         name: task
         required: true
         schema:
-          $ref: '#/definitions/models.Task'
+          $ref: '#/definitions/routes.TaskRegister'
       produces:
       - application/json
       responses:
@@ -243,8 +185,83 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: Create Task
+      tags:
+      - tasks
+  /tasks/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Elimina una tarea específica del usuario autenticado dado el ID
+        de la tarea.
+      parameters:
+      - description: Task ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'message": "Tarea Eliminada'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: 'error": "Tarea no encontrada'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: 'error": "Falló al eliminar la tarea'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: Delete Task
+      tags:
+      - tasks
+  /tasks/{id}/resolve:
+    patch:
+      consumes:
+      - application/json
+      description: Actualiza el estado de una tarea del usuario autenticado a "RESOLVED".
+      parameters:
+      - description: Task ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Tarea Resuelta
+          schema:
+            $ref: '#/definitions/models.Task'
+        "404":
+          description: 'error": "Tarea no encontrada'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: 'error": "Falló al actualizar la tarea'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: Mark Task Resolved
+      tags:
+      - tasks
 securityDefinitions:
-  "":
+  ApiKeyAuth:
     in: header
     name: Authorization
     type: apiKey

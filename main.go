@@ -17,7 +17,7 @@ func main() {
     // @version 1
     // @Description To Do List
 
-    // @securityDefinitions.apikey
+    // @securityDefinitions.apikey ApiKeyAuth
     // @in header
     // @name Authorization
 
