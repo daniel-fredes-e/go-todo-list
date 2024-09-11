@@ -11,6 +11,6 @@ COPY . ./
 
 RUN go build -o /go-todo-list
 
-EXPOSE 8000
+EXPOSE 4000
 
 CMD [ "/go-todo-list" ]

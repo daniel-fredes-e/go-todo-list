@@ -1,8 +1,8 @@
 package routes
 
 import (
-	"go-todo-list/config"
 	"go-todo-list/models"
+	"go-todo-list/utils"
 	"net/http"
 	"time"
 
@@ -42,7 +42,6 @@ var jwtKey = []byte("your_secret_key")
 // @Failure 401 {object} map[string]string
 // @Router /login [post]
 func Login(c *gin.Context) {
-    var user models.User
     var input UserLogin
     if err := c.ShouldBindJSON(&input); err != nil {
         c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -51,7 +50,9 @@ func Login(c *gin.Context) {
     username := input.Username
     password := input.Password
 
-    if err := config.DB.Where("username = ?", username).First(&user).Error; err != nil {
+    user, err := utils.GetUserExist(username)
+
+    if err != nil {
         c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid username or password"})
         return
     }
@@ -93,8 +94,8 @@ func Register(c *gin.Context) {
     }
 
     // Verifica si el nombre de usuario ya existe
-    var existingUser models.User
-    if err := config.DB.Where("username = ?", input.Username).First(&existingUser).Error; err == nil {
+    
+    if _, err := utils.GetUserExist(input.Username); err == nil {
         c.JSON(http.StatusBadRequest, gin.H{"error": "Username already taken"})
         return
     }
@@ -110,7 +111,7 @@ func Register(c *gin.Context) {
     }
 
     // Guarda el nuevo usuario en la base de datos
-    if err := config.DB.Create(&user).Error; err != nil {
+    if err := utils.CreateUser(&user); err != nil {
         c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
         return
     }
