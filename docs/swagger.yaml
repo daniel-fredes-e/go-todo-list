@@ -63,6 +63,13 @@ definitions:
       username:
         type: string
     type: object
+  utils.Response:
+    properties:
+      detail:
+        type: string
+      name:
+        type: string
+    type: object
 info:
   contact: {}
   description: To Do List
@@ -87,15 +94,11 @@ paths:
         "200":
           description: OK
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/utils.Response'
         "401":
           description: Unauthorized
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/utils.Response'
       summary: Login
       tags:
       - users
@@ -121,9 +124,7 @@ paths:
         "400":
           description: Bad Request
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/utils.Response'
       summary: Register
       tags:
       - users
@@ -142,11 +143,9 @@ paths:
               $ref: '#/definitions/models.Task'
             type: array
         "401":
-          description: 'error": "Unauthorized'
+          description: Unauthorized
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/utils.Response'
       security:
       - ApiKeyAuth: []
       summary: Get Tasks
@@ -173,15 +172,11 @@ paths:
         "400":
           description: Bad Request
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/utils.Response'
         "401":
           description: Unauthorized
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/utils.Response'
       security:
       - ApiKeyAuth: []
       summary: Create Task
@@ -205,21 +200,15 @@ paths:
         "200":
           description: 'message": "Tarea Eliminada'
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/utils.Response'
         "404":
-          description: 'error": "Tarea no encontrada'
+          description: Not Found
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/utils.Response'
         "500":
-          description: 'error": "Falló al eliminar la tarea'
+          description: Internal Server Error
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/utils.Response'
       security:
       - ApiKeyAuth: []
       summary: Delete Task
@@ -244,17 +233,13 @@ paths:
           schema:
             $ref: '#/definitions/models.Task'
         "404":
-          description: 'error": "Tarea no encontrada'
+          description: Not Found
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/utils.Response'
         "500":
-          description: 'error": "Falló al actualizar la tarea'
+          description: Internal Server Error
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/utils.Response'
       security:
       - ApiKeyAuth: []
       summary: Mark Task Resolved

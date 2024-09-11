@@ -23,7 +23,7 @@ type TaskRegister struct {
 // @Produce json
 // @Security ApiKeyAuth
 // @Success 200 {array} models.Task "Lista de tareas del usuario"
-// @Failure 401 {object} map[string]string "error": "Unauthorized"
+// @Failure 401 {object} utils.Response
 // @Router /tasks [get]
 func GetTasks(c *gin.Context) {
     tokenString := c.GetHeader("Authorization")
@@ -31,20 +31,20 @@ func GetTasks(c *gin.Context) {
         return jwtKey, nil
     })
     if err != nil || !token.Valid {
-        c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+        c.JSON(http.StatusUnauthorized, utils.Response{Name: "error", Detail: "Invalid token"})
         return
     }
 
     claims, ok := token.Claims.(jwt.MapClaims)
     if !ok {
-        c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token claims"})
+        c.JSON(http.StatusUnauthorized, utils.Response{Name: "error", Detail: "Invalid token claims"})
         return
     }
 
     username := claims["username"].(string)
     user, err := utils.GetUserExist(username)
     if err != nil {
-        c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
+        c.JSON(http.StatusUnauthorized, utils.Response{Name: "error", Detail: "User not found"})
         return
     }
 
@@ -61,8 +61,8 @@ func GetTasks(c *gin.Context) {
 // @Security ApiKeyAuth
 // @Param task body TaskRegister true "Task"
 // @Success 201 {object} models.Task
-// @Failure 401 {object} map[string]string
-// @Failure 400 {object} map[string]string
+// @Failure 401 {object} utils.Response
+// @Failure 400 {object} utils.Response
 // @Router /tasks [post]
 func CreateTask(c *gin.Context) {
     tokenString := c.GetHeader("Authorization")
@@ -70,32 +70,32 @@ func CreateTask(c *gin.Context) {
         return jwtKey, nil
     })
     if err != nil || !token.Valid {
-        c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+        c.JSON(http.StatusUnauthorized, utils.Response{Name: "error", Detail: "Invalid token"})
         return
     }
 
     claims, ok := token.Claims.(jwt.MapClaims)
     if !ok {
-        c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token claims"})
+        c.JSON(http.StatusUnauthorized, utils.Response{Name: "error", Detail: "Invalid token claims"})
         return
     }
 
     username := claims["username"].(string)
     user, err := utils.GetUserExist(username)
     if err != nil {
-        c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
+        c.JSON(http.StatusUnauthorized, utils.Response{Name: "error", Detail: "User not found"})
         return
     }
 
     var task models.Task
     var input TaskRegister
     if err := c.ShouldBindJSON(&input); err != nil {
-        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+        c.JSON(http.StatusBadRequest, utils.Response{Name: "error", Detail: err.Error()})
         return
     }
 
     task.UserID = user.ID
-    task.Status = models.Unresolved // Estado inicial no resuelto
+    task.Status = models.Unresolved
     task.CreatedAt = time.Now()
     task.UpdatedAt = time.Now()
     task.Name = input.Name
@@ -104,7 +104,7 @@ func CreateTask(c *gin.Context) {
     err = utils.CreateTask(&task)
 
     if err != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create task"})
+        c.JSON(http.StatusInternalServerError, utils.Response{Name: "error", Detail: "Failed to create task"})
         return
     }
 
@@ -120,38 +120,37 @@ func CreateTask(c *gin.Context) {
 // @Param id path int true "Task ID"
 // @Security ApiKeyAuth
 // @Success 200 {object} models.Task "Tarea Resuelta"
-// @Failure 404 {object} map[string]string "error": "Tarea no encontrada"
-// @Failure 500 {object} map[string]string "error": "Falló al actualizar la tarea"
+// @Failure 404 {object} utils.Response
+// @Failure 500 {object} utils.Response
 // @Router /tasks/{id}/resolve [patch]
 func MarkTaskResolved(c *gin.Context) {
-    taskID := c.Param("id")              // Obtiene el ID de la tarea desde la URL
+    taskID := c.Param("id")
 
     tokenString := c.GetHeader("Authorization")
     token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
         return jwtKey, nil
     })
     if err != nil || !token.Valid {
-        c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+        c.JSON(http.StatusUnauthorized, utils.Response{Name: "error", Detail: "Invalid token"})
         return
     }
 
     claims, ok := token.Claims.(jwt.MapClaims)
     if !ok {
-        c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token claims"})
+        c.JSON(http.StatusUnauthorized, utils.Response{Name: "error", Detail: "Invalid token claims"})
         return
     }
 
     username := claims["username"].(string)
     user, err := utils.GetUserExist(username)
     if err != nil {
-        c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
+        c.JSON(http.StatusUnauthorized, utils.Response{Name: "error", Detail: "User not found"})
         return
     }
 
-    // Verifica si la tarea existe y pertenece al usuario
     task, err := utils.GetTasksExist(taskID, user.ID)
     if err != nil {
-        c.JSON(http.StatusNotFound, gin.H{"error": "Task not found"})
+        c.JSON(http.StatusNotFound, utils.Response{Name: "error", Detail: "Task not found"})
         return
     }
 
@@ -161,7 +160,7 @@ func MarkTaskResolved(c *gin.Context) {
     err = utils.UpdateTask(task)
 
     if err != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to mark task as resolved"})
+        c.JSON(http.StatusInternalServerError, utils.Response{Name: "error", Detail: "Failed to mark task as resolved"})
         return
     }
 
@@ -176,9 +175,9 @@ func MarkTaskResolved(c *gin.Context) {
 // @Produce json
 // @Param id path int true "Task ID"
 // @Security ApiKeyAuth
-// @Success 200 {object} map[string]string "message": "Tarea Eliminada"
-// @Failure 404 {object} map[string]string "error": "Tarea no encontrada"
-// @Failure 500 {object} map[string]string "error": "Falló al eliminar la tarea"
+// @Success 200 {object} utils.Response "message": "Tarea Eliminada"
+// @Failure 404 {object} utils.Response
+// @Failure 500 {object} utils.Response
 // @Router /tasks/{id} [delete]
 func DeleteTask(c *gin.Context) {
     taskID := c.Param("id")              // Obtiene el ID de la tarea desde la URL
@@ -188,36 +187,35 @@ func DeleteTask(c *gin.Context) {
         return jwtKey, nil
     })
     if err != nil || !token.Valid {
-        c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+        c.JSON(http.StatusUnauthorized, utils.Response{Name: "error", Detail: "Invalid token"})
         return
     }
 
     claims, ok := token.Claims.(jwt.MapClaims)
     if !ok {
-        c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token claims"})
+        c.JSON(http.StatusUnauthorized, utils.Response{Name: "error", Detail: "Invalid token claims"})
         return
     }
 
     username := claims["username"].(string)
     user, err := utils.GetUserExist(username)
     if err != nil {
-        c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
+        c.JSON(http.StatusUnauthorized, utils.Response{Name: "error", Detail: "User not found"})
         return
     }
 
-    // Verifica si la tarea existe y pertenece al usuario
     task, err := utils.GetTasksExist(taskID, user.ID)
     if err != nil {
-        c.JSON(http.StatusNotFound, gin.H{"error": "Task not found"})
+        c.JSON(http.StatusNotFound, utils.Response{Name: "error", Detail: "Task not found"})
         return
     }
 
     err = utils.DeleteTask(task)
 
     if err != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete task"})
+        c.JSON(http.StatusInternalServerError, utils.Response{Name: "error", Detail: "Failed to delete task"})
         return
     }
 
-    c.JSON(http.StatusOK, gin.H{"message": "Task deleted successfully"})
+    c.JSON(http.StatusOK, utils.Response{Name: "message", Detail: "Task deleted successfully"})
 }
