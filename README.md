@@ -12,7 +12,7 @@ test:
 
 docker build -t go-todo-list-tests -f Dockerfile.test .
 
-sudo docker run --rm go-todo-list-tests
+docker run --rm go-todo-list-tests
 
 swagger:
 

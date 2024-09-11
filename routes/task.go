@@ -1,8 +1,8 @@
 package routes
 
 import (
-	"go-todo-list/config"
 	"go-todo-list/models"
+	"go-todo-list/utils"
 	"net/http"
 	"time"
 
@@ -42,14 +42,13 @@ func GetTasks(c *gin.Context) {
     }
 
     username := claims["username"].(string)
-    var user models.User
-    if err := config.DB.Where("username = ?", username).First(&user).Error; err != nil {
+    user, err := utils.GetUserExist(username)
+    if err != nil {
         c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
         return
     }
 
-    var tasks []models.Task
-    config.DB.Where("user_id = ?", user.ID).Find(&tasks)
+    tasks, _ := utils.GetTasks(user.ID)
     c.JSON(http.StatusOK, tasks)
 }
 
@@ -82,8 +81,8 @@ func CreateTask(c *gin.Context) {
     }
 
     username := claims["username"].(string)
-    var user models.User
-    if err := config.DB.Where("username = ?", username).First(&user).Error; err != nil {
+    user, err := utils.GetUserExist(username)
+    if err != nil {
         c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
         return
     }
@@ -102,7 +101,9 @@ func CreateTask(c *gin.Context) {
     task.Name = input.Name
     task.Description = input.Description
 
-    if err := config.DB.Create(&task).Error; err != nil {
+    err = utils.CreateTask(&task)
+
+    if err != nil {
         c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create task"})
         return
     }
@@ -141,15 +142,15 @@ func MarkTaskResolved(c *gin.Context) {
     }
 
     username := claims["username"].(string)
-    var user models.User
-    if err := config.DB.Where("username = ?", username).First(&user).Error; err != nil {
+    user, err := utils.GetUserExist(username)
+    if err != nil {
         c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
         return
     }
 
-    var task models.Task
     // Verifica si la tarea existe y pertenece al usuario
-    if err := config.DB.Where("id = ? AND user_id = ?", taskID, user.ID).First(&task).Error; err != nil {
+    task, err := utils.GetTasksExist(taskID, user.ID)
+    if err != nil {
         c.JSON(http.StatusNotFound, gin.H{"error": "Task not found"})
         return
     }
@@ -157,7 +158,9 @@ func MarkTaskResolved(c *gin.Context) {
     task.Status = models.Resolved
     task.UpdatedAt = time.Now()
 
-    if err := config.DB.Save(&task).Error; err != nil {
+    err = utils.UpdateTask(task)
+
+    if err != nil {
         c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to mark task as resolved"})
         return
     }
@@ -196,20 +199,22 @@ func DeleteTask(c *gin.Context) {
     }
 
     username := claims["username"].(string)
-    var user models.User
-    if err := config.DB.Where("username = ?", username).First(&user).Error; err != nil {
+    user, err := utils.GetUserExist(username)
+    if err != nil {
         c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
         return
     }
 
-    var task models.Task
     // Verifica si la tarea existe y pertenece al usuario
-    if err := config.DB.Where("id = ? AND user_id = ?", taskID, user.ID).First(&task).Error; err != nil {
+    task, err := utils.GetTasksExist(taskID, user.ID)
+    if err != nil {
         c.JSON(http.StatusNotFound, gin.H{"error": "Task not found"})
         return
     }
 
-    if err := config.DB.Delete(&task).Error; err != nil {
+    err = utils.DeleteTask(task)
+
+    if err != nil {
         c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete task"})
         return
     }
