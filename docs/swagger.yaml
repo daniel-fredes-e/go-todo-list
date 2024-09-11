@@ -1,0 +1,268 @@
+definitions:
+  models.Task:
+    properties:
+      created_at:
+        type: string
+      deleted_at:
+        description: Campo de soft delete
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      status:
+        $ref: '#/definitions/models.TaskStatus'
+      updated_at:
+        type: string
+      user_id:
+        type: integer
+    type: object
+  models.TaskStatus:
+    enum:
+    - RESOLVED
+    - UNRESOLVED
+    type: string
+    x-enum-varnames:
+    - Resolved
+    - Unresolved
+  routes.TaskRegister:
+    properties:
+      description:
+        type: string
+      name:
+        type: string
+    type: object
+  routes.UserLogin:
+    properties:
+      password:
+        type: string
+      username:
+        type: string
+    type: object
+  routes.UserRegister:
+    properties:
+      name:
+        type: string
+      password:
+        type: string
+      username:
+        type: string
+    type: object
+  routes.UserResponse:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      updated_at:
+        type: string
+      username:
+        type: string
+    type: object
+info:
+  contact: {}
+  description: To Do List
+  title: Go Todo List
+  version: "1"
+paths:
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: Login de usuario, devuelve Token JWT
+      parameters:
+      - description: Login Input
+        in: body
+        name: login
+        required: true
+        schema:
+          $ref: '#/definitions/routes.UserLogin'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Login
+      tags:
+      - users
+  /register:
+    post:
+      consumes:
+      - application/json
+      description: Registra nuevo usuario
+      parameters:
+      - description: User Registration
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/routes.UserRegister'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/routes.UserResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Register
+      tags:
+      - users
+  /tasks:
+    get:
+      consumes:
+      - application/json
+      description: Obtiene las tareas de un usuario autorizado
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Lista de tareas del usuario
+          schema:
+            items:
+              $ref: '#/definitions/models.Task'
+            type: array
+        "401":
+          description: 'error": "Unauthorized'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: Get Tasks
+      tags:
+      - tasks
+    post:
+      consumes:
+      - application/json
+      description: creación de nuevas tareas para usuario autorizado
+      parameters:
+      - description: Task
+        in: body
+        name: task
+        required: true
+        schema:
+          $ref: '#/definitions/routes.TaskRegister'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Task'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: Create Task
+      tags:
+      - tasks
+  /tasks/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Elimina una tarea específica del usuario autenticado dado el ID
+        de la tarea.
+      parameters:
+      - description: Task ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'message": "Tarea Eliminada'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: 'error": "Tarea no encontrada'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: 'error": "Falló al eliminar la tarea'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: Delete Task
+      tags:
+      - tasks
+  /tasks/{id}/resolve:
+    patch:
+      consumes:
+      - application/json
+      description: Actualiza el estado de una tarea del usuario autenticado a "RESOLVED".
+      parameters:
+      - description: Task ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Tarea Resuelta
+          schema:
+            $ref: '#/definitions/models.Task'
+        "404":
+          description: 'error": "Tarea no encontrada'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: 'error": "Falló al actualizar la tarea'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: Mark Task Resolved
+      tags:
+      - tasks
+securityDefinitions:
+  ApiKeyAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
